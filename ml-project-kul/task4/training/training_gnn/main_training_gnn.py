@@ -34,7 +34,7 @@ def main_training_gnn(config=None):
         
         if config['load_model']:
             log.info('Loading model')
-            neural_net.load_checkpoint(config['checkpoint'], 'checkpoint_11.weights.h5')
+            neural_net.load_checkpoint(config['checkpoint'], 'best.weights.h5')
         else:
             log.warning('Not loading a checkpoint!')
         

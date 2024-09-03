@@ -13,7 +13,7 @@ numEpisodes: 30
 updateThreshold: 0.55 # winrate threshold for accepting new NN
 maxlenOfQueue: 80000
 numItersForTrainExamplesHistory: 10000
-epochs: 2 #20
+epochs: 50
 batch_size: 64
 
 # NN WRAPPER SETTINGS #
@@ -40,7 +40,7 @@ numMCTSSimsArena: 5
 saveResults: True
 resultsFilePath: "resultsIteration_last_attempt.csv"
 checkpoint: "checkpoint_last_attempt"
-load_model: False
+load_model: True
 load_examples: False
 load_folder_file_0: "checkpoint_last_attempt"
 load_folder_file_1: "checkpoint_0"
