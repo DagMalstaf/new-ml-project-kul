@@ -1,0 +1,9 @@
+optuna==3.6.1
+numpy==1.24.4
+open-spiel==1.4
+tensorflow==2.16.1
+click
+torch
+torch
+torch_geometric
+pandas

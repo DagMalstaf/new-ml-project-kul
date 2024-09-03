@@ -1,0 +1,54 @@
+# GAME SETTINGS #
+num_rows: 7
+num_cols: 7
+
+# MCTS SETTINGS #
+exploration_coefficient: 1.414
+num_MCTS_sims: 20
+tempThreshold: 35
+
+# TRAIN SETTINGS #
+numIterations: 1000
+numEpisodes: 20
+updateThreshold: 0.55 
+maxlenOfQueue: 80000
+numItersForTrainExamplesHistory: 10000
+epochs: 15
+batch_size: 32
+
+# NN WRAPPER SETTINGS #
+checkpoint_path: "task4/training/training_alphazero/checkpoint/"
+learning_rate: 0.001
+nn_width: 128
+nn_depth: 8
+weight_decay: 1e-4
+
+# ARENA SETTINGS #
+arenaCompare: 20
+numMCTSSimsArena: 20
+
+# COACH SETTINGS #
+saveResults: True
+resultsFilePath: "resultsIteration_last_attempt.csv"
+checkpoint: "checkpoint_last_attempt"
+load_model: False
+load_examples: False
+load_folder_file_0: "checkpoint_last_attempt"
+load_folder_file_1: "checkpoint_4"
+
+# Tournament Settings #
+numMCTSSimsTournament: 10
+tournament_folder: "/"
+tournament_file_name: "best.weights.h5"
+
+
+
+
+
+
+
+# Rest #
+lr: 0.00008
+cpuct: 3.0
+num_channels: 128
+l2_coeff: 0.0001

@@ -1,0 +1,23 @@
+name: Training Workflow
+
+on:
+  push:
+    branches:
+      - training
+    paths-ignore:
+      - 'output.log'
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Trigger training on GCE instance
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.GCE_IP }}
+        username: ${{ secrets.GCE_USERNAME }}
+        key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
+        script: "/home/dag.malstaf/ml-project/auto_train.sh"

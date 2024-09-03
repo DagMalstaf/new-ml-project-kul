@@ -1,0 +1,28 @@
+num_simulations:
+  low: 10
+  high: 30
+exploration_coefficient:
+  low: 0.1
+  high: 2.0
+batch_size:
+  options: [16]
+epochs:
+  low: 30
+  high: 60
+learning_rate:
+  low: 0.0001
+  high: 0.01
+optimizer:
+  options: ["adam", "sgd"]
+num_conv_layers:
+  low: 2
+  high: 5
+num_dense_units:
+  options: [64, 128, 256]
+dropout_rate:
+  low: 0.1
+  high: 0.5
+num_residual_blocks:
+  low: 2
+  high: 5
+n_trials: 30

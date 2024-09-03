@@ -1,0 +1,6 @@
+best_trial_value: 3.1779255867004395
+parameters:
+  batch_size: 16
+  exploration_coefficient: 1.710749484267416
+  num_episodes: 1
+  num_simulations: 1

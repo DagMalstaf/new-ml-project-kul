@@ -1,0 +1,3 @@
+agent_p1,agent_p2,return_p1,return_p2,error
+tournament,random,1.0,-1.0,
+random,tournament,-1.0,1.0,

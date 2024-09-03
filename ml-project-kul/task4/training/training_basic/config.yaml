@@ -1,0 +1,30 @@
+tournament:
+  num_games: 10
+  play_human: True
+
+mcts_agent:
+  game_name: "dots_and_boxes(num_rows=7,num_cols=7)"
+  num_simulations: 10 #hoeveel simulaties die runt voor een action te kiezen
+  exploration_coefficient: 1.41
+
+nn_mcts_agent:
+  game_name: "dots_and_boxes(num_rows=7,num_cols=7)"
+  num_simulations: 10
+  exploration_coefficient: 1.0
+  model_path: "task4/models/basic-nn-mcts-models/model.keras"
+  num_episodes: 200
+
+advanced_nn_mcts_agent:
+  game_name: "dots_and_boxes(num_rows=7,num_cols=7)"
+  num_simulations: 10
+  exploration_coefficient: 1.41
+  model_path: "task4/models/advanced-nn-mcts-models/long-train-7x7.keras"
+  num_episodes: 1000
+
+paper_agent:
+  game_name: "dots_and_boxes(num_rows=7,num_cols=7)"
+  input_shape: [11,11,17]
+  num_simulations: 50
+  exploration_coefficient: 1.41
+  model_path: "task4/models/advanced-nn-mcts-models/final-model.keras"
+  num_episodes: 1000
