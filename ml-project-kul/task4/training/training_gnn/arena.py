@@ -6,6 +6,9 @@ import numpy as np
 from open_spiel.python.algorithms.mcts import MCTSBot
 from open_spiel.python.algorithms.mcts import RandomRolloutEvaluator
 
+from task4.training.training_gnn.greedy_agent import *
+from task4.training.training_gnn.gnn_evaluator import *
+
 
 class Arena():
     def __init__(self, player1, player2, game, display=None):
@@ -94,7 +97,7 @@ class Arena():
         oneWon, twoWon, draws = 0,0,0
         trainExamplesRandom = []
         
-        for i in tqdm(range(num//2), desc="Playing_games_1"):
+        for i in tqdm(range(num//2), desc="Playing_Random"):
             reward, gameExamples = arena.playGameWithExamples()
             trainExamplesRandom.extend(gameExamples)
             if reward[0] == 1.0:
@@ -107,7 +110,7 @@ class Arena():
         rp2 = UniformRandomBot(0,np.random)
         arena = Arena(rp2,player1, self.game)
 
-        for _ in tqdm(range(num//2), desc="Playing_games_2"):
+        for _ in tqdm(range(num//2), desc="Playing_Random"):
             reward, gameExamples = arena.playGameWithExamples()
             trainExamplesRandom.extend(gameExamples)
             if reward[0] == 1.0:
@@ -126,7 +129,7 @@ class Arena():
         oneWon, twoWon, draws = 0, 0, 0
         trainExamplesMCTS = []
 
-        for _ in tqdm(range(num // 2), desc="Playing_games_1"):
+        for _ in tqdm(range(num // 2), desc="Playing_MCTS"):
             reward, gameExamples = arena.playGameWithExamples()
             trainExamplesMCTS.extend(gameExamples)
             if reward[0] == 1.0:
@@ -138,7 +141,7 @@ class Arena():
 
         arena = Arena(p2, player1, self.game)
 
-        for _ in tqdm(range(num // 2), desc="Playing_games_2"):
+        for _ in tqdm(range(num // 2), desc="Playing_MCTS"):
             reward, gameExamples = arena.playGameWithExamples()
             trainExamplesMCTS.extend(gameExamples)
             if reward[0] == 1.0:
@@ -150,5 +153,35 @@ class Arena():
         
         return oneWon, twoWon, draws, trainExamplesMCTS
     
+    def playGamesAgainstGreedy(self, player1, num, evaluator, verbose=False):
+        p2 = get_agent_for_tournament_greedy("Greedy", evaluator)
+
+        arena = Arena(player1, p2, self.game)
+        oneWon, twoWon, draws = 0, 0, 0
+        trainExamplesMCTS = []
+
+        for _ in tqdm(range(num // 2), desc="Playing_Greedy"):
+            reward, gameExamples = arena.playGameWithExamples()
+            trainExamplesMCTS.extend(gameExamples)
+            if reward[0] == 1.0:
+                oneWon += 1
+            elif reward[1] == 1.0:
+                twoWon += 1
+            else:
+                draws += 1
+
+        arena = Arena(p2, player1, self.game)
+
+        for _ in tqdm(range(num // 2), desc="Playing_Greedy"):
+            reward, gameExamples = arena.playGameWithExamples()
+            trainExamplesMCTS.extend(gameExamples)
+            if reward[0] == 1.0:
+                twoWon += 1
+            elif reward[1] == 1.0:
+                oneWon += 1
+            else:
+                draws += 1
+        
+        return oneWon, twoWon, draws, trainExamplesMCTS
     
     

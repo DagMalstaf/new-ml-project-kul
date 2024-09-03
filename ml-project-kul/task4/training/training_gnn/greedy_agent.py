@@ -93,6 +93,9 @@ class Agent(pyspiel.Bot):
         """
         pass
 
+    def step_with_policy(self, state):
+        return self.step(state)
+
     
     def step(self, state):
         """Returns the selected action in the given state.
@@ -182,7 +185,7 @@ def test_api_calls():
     dotsandboxes_game_string = (
         "dotsandboxes(num_rows=5,num_cols=5)")
     game = pyspiel.load_game(dotsandboxes_game_string)
-    bots = [get_agent_for_tournament(player_id) for player_id in [0,1]]
+    bots = [get_agent_for_tournament_greedy(player_id) for player_id in [0,1]]
     returns = evaluate_bots.evaluate_bots(game.new_initial_state(), bots, np.random)
     assert len(returns) == 2
     assert isinstance(returns[0], float)

@@ -28,7 +28,6 @@ class GNNEvaluator(Evaluator):
     
     def policy(self, state):
         policy, _ = self.nnet.predict(state=state)
-        print(len(policy))
 
         policy_cpu = policy.cpu().numpy()  
 

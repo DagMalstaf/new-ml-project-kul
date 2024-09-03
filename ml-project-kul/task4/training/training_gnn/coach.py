@@ -64,9 +64,7 @@ class Coach():
             if opponent and state.current_player() == 1: 
                 policy_vector, action = opponent.step(state)
             else:
-                policy_vector, action = self.mcts.step(state, temp) #len 112 en lijst met alleen maar de policy values in
-            
-            
+                policy_vector, action = self.mcts.step(state, temp) 
             
             trainExamples.append([state_to_graph_data(state), policy_vector, state.current_player(), None])
             
@@ -81,6 +79,7 @@ class Coach():
         for i in range(1, self.config['numIterations'] + 1):
             log.info(f'Starting Iteration #{i} ...')
             log.info('Running Self Play')
+       
             if not self.skipFirstSelfPlay or i > 1:
                 iterationTrainExamples = deque([], maxlen=self.config['maxlenOfQueue'])
                 self.mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
@@ -109,7 +108,7 @@ class Coach():
 
             self.nnet.save_checkpoint(folder=self.config['checkpoint'], filename='temp_checkpoint.weights.h5')
             self.pnet.load_checkpoint(folder=self.config['checkpoint'], filename='temp_checkpoint.weights.h5')
-
+            
             previous_mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
             log.info('Training Neural Network')
             self.nnet.train(trainExamples)
@@ -117,8 +116,11 @@ class Coach():
 
             new_mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator) 
 
+            
+               
             log.info('Comparing old and new network')
             arena = Arena(previous_mcts, new_mcts, self.game)
+            
             pwins, nwins, draws = arena.playGames(self.config['arenaCompare'])
 
             log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
@@ -133,7 +135,9 @@ class Coach():
             
                 new_model = True
                 won, lost, draw, examples_random = arena.playGamesAgainstRandom(new_mcts, 40)
-                won_m, lost_m, draw_m, examples_mcts = arena.playGamesAgainstMCTS(new_mcts, 40)
+                won_m, lost_m, draw_m, examples_mcts = arena.playGamesAgainstGreedy(new_mcts, 40, self.evaluator)
+                #won_m, lost_m, draw_m, examples_mcts = arena.playGamesAgainstMCTS(new_mcts, 40)
+
                 winning_rate = round(won/(won+lost+draw),4)
                 winning_rate_m = round(won_m/(won_m+lost_m+draw_m),4)
                 log.info(f"Against Random - Won: {won}, Lost: {lost}, Draw: {draw}, Winning Rate: {winning_rate}")
