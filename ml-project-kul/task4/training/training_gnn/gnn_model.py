@@ -89,7 +89,7 @@ class GNNetWrapper():
         with torch.no_grad():
             edge_probs,value = self.nnet(data)
 
-        return edge_probs,value
+        return edge_probs, value
 
     def load_checkpoint(self, folder, filename):
         full_path = os.path.join(folder, filename)

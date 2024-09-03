@@ -22,7 +22,7 @@ from open_spiel.python.algorithms import evaluate_bots
 logger = logging.getLogger('be.kuleuven.cs.dtai.dotsandboxes')
 
 
-def get_agent_for_tournament(player_id):
+def get_agent_for_tournament_greedy(player_id, evaluator):
     """Change this function to initialize your agent.
     This function is called by the tournament code at the beginning of the
     tournament.
@@ -30,7 +30,7 @@ def get_agent_for_tournament(player_id):
     :param player_id: The integer id of the player for this bot, e.g. `0` if
         acting as the first player.
     """
-    my_player = Agent(player_id)
+    my_player = Agent(player_id, evaluator)
     return my_player
 
 
@@ -56,7 +56,7 @@ def num2state(state):
 class Agent(pyspiel.Bot):
     """Agent template"""
 
-    def __init__(self, player_id):
+    def __init__(self, player_id, evaluator):
         """Initialize an agent to play Dots and Boxes.
 
         Note: This agent should make use of a pre-trained policy to enter
@@ -65,11 +65,12 @@ class Agent(pyspiel.Bot):
         """
         pyspiel.Bot.__init__(self)
         self.player_id = player_id
-        self.num_cols = None
-        self.num_rows = None
-        self.num_cells = None
+        self.num_cols = 7
+        self.num_rows = 7
+        self.num_cells = (self.num_rows + 1) * (self.num_cols + 1)
         self.num_parts = 3
         self.game = None
+        self.evaluator = evaluator
 
     def restart_at(self, state):
         """Starting a new game in the given state.
@@ -100,9 +101,13 @@ class Agent(pyspiel.Bot):
         :returns: The selected action from the legal actions, or
             `pyspiel.INVALID_ACTION` if there are no legal actions available.
         """
-        legal_actions = state.legal_actions()
+        if self.game is None:
+            self.game = state.get_game()
 
-        # Search for a greedy move
+        legal_actions = state.legal_actions()
+        policy = self.evaluator.policy(state)
+
+
         for r in range(self.num_rows):
             for c in range(self.num_cols):
                 cnt = 0
@@ -121,12 +126,36 @@ class Agent(pyspiel.Bot):
                     if action not in legal_actions:
                         print(f"ERROR: illegal action chosen: {action} is not in {legal_actions}")
                     else:
-                        return action
+                        return policy, action
+        
 
-        # Plays random action
         rand_idx = random.randint(0, len(legal_actions) - 1)
         action = legal_actions[rand_idx]
-        return action
+        return policy, action
+
+    def get_policy_vector(self, state):
+        num_actions = self.game.num_distinct_actions()
+        policy_vector = np.zeros(num_actions)
+
+        state_input = self.convert_state_to_input(state)
+
+        action_probabilities = self.model.predict(state_input)
+
+        # Only assign probabilities to legal actions
+        legal_actions = state.legal_actions()
+        for action in legal_actions:
+            policy_vector[action] = action_probabilities[action]
+
+        # Normalize the policy vector
+        policy_vector /= np.sum(policy_vector)
+        
+        return policy_vector
+
+    def convert_state_to_input(self, state):
+        """Convert the game state to a format suitable for neural network input."""
+        # Implement the conversion logic based on your model's input requirements
+        pass
+
 
     def get_observation(self, obs_tensor, state, row, col, part):
         state = state2num(state)

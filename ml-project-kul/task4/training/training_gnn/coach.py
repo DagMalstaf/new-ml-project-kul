@@ -15,6 +15,8 @@ from task4.training.training_gnn.gnn_agent import MCTSAgent
 from task4.training.training_gnn.gnn_evaluator import GNNEvaluator
 from task4.training.training_gnn.graph import *
 import torch
+from task4.training.training_gnn.greedy_agent import *
+from task4.training.training_gnn.minimax_agent import *
 
 log = logging.getLogger(__name__)
 
@@ -26,11 +28,15 @@ class Coach():
         self.config = config
         self.strategy = get_distribution_strategy()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
 
         with self.strategy.scope():
             self.pnet = self.nnet.__class__(config).to(self.device) 
             self.evaluator = GNNEvaluator(self.nnet)
             self.mcts = MCTSAgent(self.game, self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
+            self.greedy_agent = get_agent_for_tournament_greedy("greedy", self.evaluator)
+            self.minimax_agent = get_agent_for_tournament_minimax("minimax", self.evaluator)
+        
             self.trainExamplesHistory = []  
             self.skipFirstSelfPlay = False  
             self.winRatesRandom = []
@@ -56,9 +62,11 @@ class Coach():
             self.curPlayer = state.current_player()
 
             if opponent and state.current_player() == 1: 
-                policy_vector, action = opponent.get_action(state, temp)
+                policy_vector, action = opponent.step(state)
             else:
-                policy_vector, action = self.mcts.step(state, temp)
+                policy_vector, action = self.mcts.step(state, temp) #len 112 en lijst met alleen maar de policy values in
+            
+            
             
             trainExamples.append([state_to_graph_data(state), policy_vector, state.current_player(), None])
             
@@ -69,26 +77,22 @@ class Coach():
         return result
 
 
-            
-            
-        
     def learn(self):
         for i in range(1, self.config['numIterations'] + 1):
             log.info(f'Starting Iteration #{i} ...')
             log.info('Running Self Play')
             if not self.skipFirstSelfPlay or i > 1:
                 iterationTrainExamples = deque([], maxlen=self.config['maxlenOfQueue'])
+                self.mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
 
-                for _ in tqdm(range(int(self.config['numEpisodes'] * 0.5)), desc="Self Play"):
-                    self.mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
+                for _ in tqdm(range(int(self.config['numEpisodes'])), desc="Self Play"):
                     iterationTrainExamples += self.executeEpisode()
                 
-                for _ in tqdm(range(int(self.config['numEpisodes'] * 0.5)), desc="Play Against Greedy Agent"):
-                    self.mcts = MCTSAgent(self.config['exploration_coefficient'], self.config['num_MCTS_sims'], self.evaluator)
+                for _ in tqdm(range(int(self.config['numEpisodes'])), desc="Play Against Greedy Agent"):
                     iterationTrainExamples += self.executeEpisode(opponent=self.greedy_agent)
 
-
-
+                #for _ in tqdm(range(int(self.config['numEpisodes'])), desc="Play Against Minimax Agent"):
+                #    iterationTrainExamples += self.executeEpisode(opponent=self.minimax_agent)
 
                 self.trainExamplesHistory.append(iterationTrainExamples)
 

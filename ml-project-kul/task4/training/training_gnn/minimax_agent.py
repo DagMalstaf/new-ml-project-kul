@@ -22,15 +22,17 @@ sys.path.append(path)
 
 from open_spiel.python.algorithms import evaluate_bots
 
-from source.transposition_table import TOptimised_Table, Transposition_Table_Chains
-from source.chains_strategy import StrategyAdvisor
-from source.evaluators import eval_maximize_difference
-from source.alphabeta import minimax_alphabeta_search
+
+from task4.training.training_gnn.source.transposition_table import TOptimised_Table, Transposition_Table_Chains
+from task4.training.training_gnn.source.chains_strategy import StrategyAdvisor
+from task4.training.training_gnn.source.evaluators import eval_maximize_difference
+from task4.training.training_gnn.source.alphabeta import minimax_alphabeta_search
+
 
 
 logger = logging.getLogger('be.kuleuven.cs.dtai.dotsandboxes')
 
-def get_agent_for_tournament(player_id):
+def get_agent_for_tournament_minimax(player_id, evaluator):
     """Change this function to initialize your agent.
     This function is called by the tournament code at the beginning of the
     tournament.
@@ -38,14 +40,14 @@ def get_agent_for_tournament(player_id):
     :param player_id: The integer id of the player for this bot, e.g. `0` if
         acting as the first player.
     """
-    my_player = Agent(player_id)
+    my_player = Agent(player_id, evaluator)
     return my_player
 
 
 class Agent(pyspiel.Bot):
     """Agent template"""
 
-    def __init__(self, player_id):
+    def __init__(self, player_id, evaluator):
         """Initialize an agent to play Dots and Boxes.
 
         Note: This agent should make use of a pre-trained policy to enter
@@ -56,6 +58,7 @@ class Agent(pyspiel.Bot):
         self.player_id = player_id
         self.TTC = Transposition_Table_Chains()
         self.SA = None
+        self.evaluator = evaluator
 
     def restart_at(self, state):
         """Starting a new game in the given state.
@@ -82,15 +85,6 @@ class Agent(pyspiel.Bot):
             self.SA.update_action(action, state.current_player())
 
     def step(self, state):
-        """Returns the selected action in the given state.
-
-        :param state: The current state of the game.
-        :returns: The selected action from the legal actions, or
-            `pyspiel.INVALID_ACTION` if there are no legal actions available.
-        """
-        # maximum tijd 200ms
-        t1 = time.time()
-
         if self.SA is None: 
             logger.info("self.SA is None in step")
             self.restart_at(state)
@@ -109,15 +103,9 @@ class Agent(pyspiel.Bot):
 
         self.SA.update_action(best_action, state.current_player())
 
-        t2 = time.time()
-        # print(f"It took {(t2 - t1) * 1000} milliseconds to infer an action with eval_maximize_difference")
+        policy = self.evaluator.prior(state)
 
-        # print(f"The transposition table was used as follows: ")
-        # print(f"The amount of hits          : {self.TT.get_hits()}")
-        # print(f"The amount of misses        : {self.TT.get_misses()}")
-        # print(f"The amount of symmetry hits : {self.TT.get_symmhits()}")
-
-        return best_action
+        return policy, best_action
 
 
 

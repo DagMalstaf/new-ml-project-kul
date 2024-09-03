@@ -25,6 +25,16 @@ class GNNEvaluator(Evaluator):
             result = [(action, pi[action]) for action, val in enumerate(state.legal_actions_mask()) if val]
             
             return result
-        
+    
+    def policy(self, state):
+        policy, _ = self.nnet.predict(state=state)
+        print(len(policy))
 
-            
+        policy_cpu = policy.cpu().numpy()  
+
+        policy = edges_to_actions(state, policy_cpu.tolist())
+
+        result = [policy[action] for action in range(state.num_distinct_actions())]
+
+        return result
+        

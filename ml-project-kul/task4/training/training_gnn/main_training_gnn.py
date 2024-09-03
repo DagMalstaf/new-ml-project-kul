@@ -5,6 +5,9 @@ import pyspiel
 import logging
 from task4.training.training_alphazero.resnet_model_V0 import get_distribution_strategy
 import torch 
+from task4.training.training_gnn.greedy_agent import *
+from task4.training.training_gnn.minimax_agent import *
+
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +37,7 @@ def main_training_gnn(config=None):
             neural_net.load_checkpoint(config['checkpoint'], 'checkpoint_11.weights.h5')
         else:
             log.warning('Not loading a checkpoint!')
+        
         
         coach = Coach(game, neural_net, config)
 
