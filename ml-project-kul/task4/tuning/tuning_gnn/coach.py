@@ -53,7 +53,7 @@ class Coach():
             arena = Arena(previous_mcts, new_mcts, self.game)
 
             self.nnet.save_checkpoint(folder=self.config['checkpoint'], filename='best.weights.h5')
-            won_m, lost_m, draw_m = arena.playGamesAgainstGreedy(new_mcts, 40, self.evaluator)
+            won_m, lost_m, draw_m, _ = arena.playGamesAgainstGreedy(new_mcts, 40, self.evaluator)
             #won_m, lost_m, draw_m = arena.playGamesAgainstMCTS(new_mcts, 60)
 
             winning_rate_m = round(won_m/(won_m+lost_m+draw_m),4)
