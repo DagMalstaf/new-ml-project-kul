@@ -1,22 +1,33 @@
 import os
+import importlib.util
+import sys
+import math
 from tqdm import tqdm
+import csv
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GINConv, global_mean_pool
-from torch_geometric.nn import GINEConv
+from torch_geometric.nn import GATConv, global_mean_pool
+
 from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch, Data
 from torch.utils.data import Dataset
+from torch.optim import lr_scheduler
 
-from task4.tuning.tuning_gnn.graph import *
+log = logging.getLogger(__name__)
+
+from task4.training.training_gnn.arena import *
+from task4.training.training_gnn.graph import *
 
 
 class GNNetWrapper():
     def __init__(self, config, save_info=False):
-        self.nnet = CustomGNN(num_features=2, channels=config['num_channels'])
+        self.nnet = CustomGNN(num_node_features=5, num_edge_features=3, channels=config['num_channels'])
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     
     def to(self, device):
         self.nnet.to(device)
@@ -35,6 +46,7 @@ class GNNetWrapper():
     
     def train(self, examples):
         input_graphs, target_pis, target_values = list(zip(*examples))
+
         
         self.nnet.to(self.device)
         
@@ -77,53 +89,57 @@ class GNNetWrapper():
         with torch.no_grad():
             edge_probs,value = self.nnet(data)
 
-        return edge_probs,value
+        return edge_probs, value
 
     def load_checkpoint(self, folder, filename):
         full_path = os.path.join(folder, filename)
         if os.path.exists(full_path):
-            map_location = torch.device('cpu') if not torch.cuda.is_available() else None
-            self.nnet.load_state_dict(torch.load(full_path, map_location=map_location))
-            print(f"Loaded weights from {full_path}")
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            self.nnet.load_state_dict(torch.load(full_path, map_location=device))
+            log.info(f"Loaded weights from {full_path} to {device}")
         else:
-            print(f"No checkpoint found at {full_path}")
-    
+            log.warning(f"No checkpoint found at {full_path}")
+        
     def save_checkpoint(self, folder, filename):
         filepath = os.path.join(folder, filename)
         if not os.path.exists(folder):
             os.mkdir(folder)
         else:
             torch.save(self.nnet.state_dict(), filepath)
-            print(f"Checkpoint saved at {filepath}")
+            log.info(f"Checkpoint saved at {filepath}")
 
     
 
 class CustomGNN(torch.nn.Module):
-    def __init__(self, num_features, channels):
+    def __init__(self, num_node_features, num_edge_features, channels):
         super(CustomGNN, self).__init__()
 
-        self.conv1 = GINConv(nn.Sequential(nn.Linear(num_features, channels),nn.ReLU(),nn.LayerNorm(channels)))
-        self.conv2 = GINConv(nn.Sequential(nn.Linear(channels, channels),nn.ReLU(),nn.LayerNorm(channels)))
-        self.conv3 = GINConv(nn.Sequential(nn.Linear(channels, channels),nn.ReLU(),nn.LayerNorm(channels)))
+        self.conv1 = GATConv(in_channels=num_node_features, out_channels=channels, heads=8, concat=False, edge_dim=num_edge_features)
+        self.conv2 = GATConv(in_channels=channels, out_channels=channels, heads=8, concat=False, edge_dim=num_edge_features)
+        self.conv3 = GATConv(in_channels=channels, out_channels=channels, heads=8, concat=False, edge_dim=num_edge_features)
 
-        self.fc1 = nn.Sequential(nn.Linear(3 * channels,channels),nn.ReLU(),nn.BatchNorm1d(channels),nn.Dropout(0.5)) 
-        self.fc2 = nn.Sequential(nn.Linear(channels, channels),nn.ReLU(),nn.BatchNorm1d(channels),nn.Dropout(0.5)) 
+        self.fc1 = nn.Sequential(nn.Linear(channels, channels), nn.ReLU(), nn.BatchNorm1d(channels), nn.Dropout(0.5))
+        self.fc2 = nn.Sequential(nn.Linear(channels, channels), nn.ReLU(), nn.BatchNorm1d(channels), nn.Dropout(0.5))
 
-        self.policy_head = nn.Sequential(nn.Linear(channels, 1),nn.Sigmoid())
-        self.value_head = nn.Sequential(nn.Linear(channels, 1),nn.Tanh())
+        # Policy and Value heads
+        self.policy_head = nn.Sequential(nn.Linear(channels, 1), nn.Sigmoid())
+        self.value_head = nn.Sequential(nn.Linear(channels, 1), nn.Tanh())
 
+    
     def forward(self, data):
-        x, edge_index, edge_attr , batch = data.x, data.edge_index, data.edge_attr, data.batch
+        x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
 
-        x1 = F.relu(self.conv1(x, edge_index)) 
-        x2 = F.relu(self.conv2(x1, edge_index))
-        x3 = F.relu(self.conv3(x2, edge_index))
+        x1 = F.relu(self.conv1(x, edge_index, edge_attr))
+        x2 = F.relu(self.conv2(x1, edge_index, edge_attr))
+        x3 = F.relu(self.conv3(x2, edge_index, edge_attr))
 
         x_concat = torch.cat([x1, x2, x3], dim=-1)
-        x_fc = self.fc2(self.fc1(x_concat))
+        x_fc = self.fc2(self.fc1(x3))
 
+        # Policy head predicts the probability of choosing each edge
         edge_probs = self.policy_head(x_fc[edge_index[0]]).squeeze()
-        value = self.value_head(global_mean_pool(x_fc,batch)).squeeze()
+        # Value head predicts the overall value of the state
+        value = self.value_head(global_mean_pool(x_fc, batch)).squeeze()
 
         return edge_probs, value
 
@@ -140,6 +156,7 @@ class CustomGraphDataset(Dataset):
 
     def __len__(self):
         return len(self.input_graphs)
+
 
 def custom_collate(batch):
     input_graphs, target_pis, target_values = zip(*batch)

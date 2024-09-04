@@ -33,7 +33,7 @@ def objective(trial):
         'l2_coeff': trial.suggest_float('l2_coeff', 1e-5, 1e-2, log=True),
         'epocs_gnn': trial.suggest_int('epocs_gnn', 10, 50),
         'batch_size': trial.suggest_int('batch_size', 32, 128),
-        'num_MCTS_sims': 10,
+        'num_MCTS_sims': 15,
         'exploration_coefficient': trial.suggest_float('exploration_coefficient', 0.1, 2.0, log=True),
         'tempThreshold': 15,
         'maxlenOfQueue': 200000,
@@ -46,7 +46,7 @@ def objective(trial):
         'saveResults': False,
         'resultsFilePath': 'results.csv',
         'load_folder_file_0': "checkpoint_last_attempt",
-        'load_folder_file_1': "checkpoint_3",
+        'load_folder_file_1': "checkpoint_13",
         'tune_file_name': 'best.weights.h5'
     }
     current_directory = os.path.dirname(__file__)
@@ -58,7 +58,7 @@ def objective(trial):
 
     winning_rate = coach.learn()
 
-    if winning_rate > 0.95:
+    if winning_rate > 0.70:
         trial.study.stop()
         best_params = trial.params
         current_directory = os.path.dirname(__file__)
