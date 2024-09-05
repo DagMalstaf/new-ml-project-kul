@@ -107,7 +107,6 @@ class GNNetWrapper():
         else:
             torch.save(self.nnet.state_dict(), filepath)
             log.info(f"Checkpoint saved at {filepath}")
-
     
 
 class CustomGNN(torch.nn.Module):

@@ -55,13 +55,13 @@ class MinimaxSymmetry:
         # Check if square board
         if self.num_rows == self.num_cols:
             forms = [
-                grid,
-                self.rotate_grid(grid, 1),
-                self.rotate_grid(grid, 2),
-                self.rotate_grid(grid, 3),
-                self.reflect_grid(grid, 0),
-                self.reflect_grid(grid, 1),
-                self.rotate_grid(self.reflect_grid(grid, 0), 1),
+                grid,                       # 0 graden rotatie
+                self.rotate_grid(grid, 1),  # 90 graden rotatie
+                self.rotate_grid(grid, 2),  # 180 graden rotatie
+                self.rotate_grid(grid, 3),  # 270 graden rotatie
+                self.reflect_grid(grid, 0), # verticale reflectie
+                self.reflect_grid(grid, 1), # horizontale reflectie
+                self.rotate_grid(self.reflect_grid(grid, 0), 1), # 
                 self.rotate_grid(self.reflect_grid(grid, 0), 2),
                 self.rotate_grid(self.reflect_grid(grid, 0), 3)
             ]

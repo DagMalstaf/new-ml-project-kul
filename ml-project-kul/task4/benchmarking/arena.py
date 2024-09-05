@@ -55,8 +55,11 @@ class Arena():
             curPlayer = state.current_player()
 
             bot = players[curPlayer]
-            action = bot.step(state)
-
+            result = bot.step(state)
+            if isinstance(result, tuple) and len(result) == 2:
+                action = result[1]
+            else:
+                action = result 
             state.apply_action(action)
 
         return state.rewards()

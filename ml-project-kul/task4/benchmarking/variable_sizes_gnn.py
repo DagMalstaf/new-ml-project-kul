@@ -44,7 +44,8 @@ def benchmark_gnn(csv_path):
         game = pyspiel.load_game(game_string)
 
         nnet = gnn(config)
-        nnet.load_checkpoint(current_directory, config['tournament_file_name'])
+        #nnet.load_checkpoint(current_directory, config['tournament_file_name'])
+        nnet.load_checkpoint(config['checkpoint'], 'best.weights.h5')
 
         evaluator = GNNEvaluator(nnet)
 
@@ -102,8 +103,8 @@ def main_benchmarking():
     csv_file_name = config['resultsFilePathBench']
     csv_path = os.path.join(current_directory, csv_file_name)
 
-    #benchmark_gnn(csv_path)
-    plot_results(csv_path)
+    benchmark_gnn(csv_path)
+    #plot_results(csv_path)
 
 if __name__ == "__main__":
     main_benchmarking()

@@ -51,5 +51,5 @@ tournament_file_name: "best.weights.h5"
 # Benchmark Settings #
 resultsFilePathBench: 'scaleExperiment.csv'
 numMCTSSimsBench': 15
-gamesToPlay: 20       
+gamesToPlay: 15       
 checkpointBench: 'checkpoint_256_update'
