@@ -43,7 +43,7 @@ load_folder_file_0: "checkpoint_last_attempt"
 load_folder_file_1: "checkpoint_0"
 
 # Tournament Settings #
-numMCTSSimsTournament: 7
+numMCTSSimsTournament: 50
 tournament_folder: "/"
 tournament_file_name: "best.weights.h5"
 
