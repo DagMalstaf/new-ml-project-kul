@@ -178,16 +178,16 @@ class MCTSAgent():
         root = SearchNode(None, state.current_player(), 1)
         for _ in range(self.max_simulations):
             self.simulations_count += 1
-            visit_path, working_state = self._apply_tree_policy(root, state)
-            if working_state.is_terminal():
+            visit_path, working_state = self._apply_tree_policy(root, state) # SELECTION (1)
+            if working_state.is_terminal(): # Rollout simulation (3)
                 returns = working_state.returns()
                 visit_path[-1].outcome = returns
                 solved = self.solve
             else:
-                returns = self.evaluator.evaluate(working_state)
+                returns = self.evaluator.evaluate(working_state) # Rollout simulation (3)
                 solved = False
 
-            while visit_path:
+            while visit_path: # backpropagate (4)
                 decision_node_idx = -1
                 while visit_path[decision_node_idx].player == pyspiel.PlayerId.CHANCE:
                     decision_node_idx -= 1
@@ -226,8 +226,8 @@ class MCTSAgent():
         working_state = state.clone()
         current_node = root
         while (not working_state.is_terminal() and current_node.explore_count > 0) or ( working_state.is_chance_node() and self.dont_return_chance_node):
-            if not current_node.children:
-                legal_actions = self.evaluator.prior(working_state)
+            if not current_node.children: # EXPANSION (2)
+                legal_actions = self.evaluator.prior(working_state) # policy vector
                 if current_node is root and self._dirichlet_noise:
                     epsilon, alpha = self._dirichlet_noise
                     noise = self._random_state.dirichlet([alpha] * len(legal_actions))
@@ -243,7 +243,7 @@ class MCTSAgent():
                 action = self._random_state.choice(action_list, p=prob_list)
                 chosen_child = next(c for c in current_node.children if c.action == action)
             else:
-                chosen_child = max( current_node.children, key=lambda c: self._child_selection_fn(c, current_node.explore_count, self.uct_c))
+                chosen_child = max( current_node.children, key=lambda c: self._child_selection_fn(c, current_node.explore_count, self.uct_c)) # SELECTION (1)
 
             working_state.apply_action(chosen_child.action)
             current_node = chosen_child
